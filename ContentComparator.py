@@ -8,8 +8,8 @@ class ContentComparator:
 
     def detect_changes(self):
         diff = difflib.ndiff(self.old_content.splitlines(), self.new_content.splitlines())
-        changes = '\n'.join(diff)
-        return changes
+        changes = [line for line in diff if line.startswith('+ ') or line.startswith('- ')]
+        return '\n'.join(changes)
 
     def load_previous_content(self, filename):
         if not os.path.exists(filename):
@@ -21,3 +21,4 @@ class ContentComparator:
     def save_current_content(self, filename):
         with open(filename, "w", encoding="utf-8") as file:
             file.write(self.new_content)
+
