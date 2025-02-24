@@ -1,6 +1,38 @@
-'''
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from WebFetcher import WebFetcher
 from ContentComparator import ContentComparator
+
+def send_email(subject, body, to_email):
+    from_email = "prakse2025@inbox.lv"
+    password = "JE8Xr3Ke8w"
+
+    # Create message container
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+
+    # Attach message body
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Connect to the server and send the email
+    try:
+        server = smtplib.SMTP('mail.inbox.lv', 587)  # SMTP server and port
+        server.set_debuglevel(1)  # Enable debugging to print the SMTP communication
+
+        server.starttls()  # Upgrade to a secure connection
+        server.login(from_email, password)  # Log in to the email server
+        server.sendmail(from_email, to_email, msg.as_string())  # Send the email
+        server.quit()  # Disconnect from the server
+        print("Email sent successfully!")
+    except smtplib.SMTPAuthenticationError:
+        print("Authentication failed: Check your email or password.")
+    except smtplib.SMTPConnectError:
+        print("Connection error: Check your SMTP server and port.")
+    except Exception as e:
+        print("Failed to send email:", str(e))
 
 if __name__ == "__main__":
     url = "https://www.neste.lv/lv/content/degvielas-cenas"
@@ -16,10 +48,16 @@ if __name__ == "__main__":
     
     if changes:
         print("Changes detected:\n", changes)
+        # Send email notification
+        subject = "Content Change Detected"
+        body = f"Changes detected in the content:\n{changes}"
+        to_email = "oskars_val@inbox.lv"
+        send_email(subject, body, to_email)
     
     # Save the current content only if changes are detected
     if changes:
         comparator.save_current_content("previous_content.txt")
+
 '''
 from WebFetcher import WebFetcher
 from ContentParser import ContentParser
@@ -51,3 +89,4 @@ if __name__ == "__main__":
     
     # Save the full HTML content for future comparisons
     comparator.save_current_content("previous_element_content.txt", new_html_content)
+'''
