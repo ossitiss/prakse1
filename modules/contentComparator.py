@@ -1,7 +1,7 @@
 import difflib
 import os
 
-class ContentComparator:
+class contentComparator:
     def __init__(self, new_content):
         self.old_content = ""  # Initially empty
         self.new_content = new_content
@@ -10,9 +10,9 @@ class ContentComparator:
         # If old content is still empty, no need to detect changes
         if not self.old_content:
             return "No previous content available for comparison."
-        
+    
         diff = difflib.ndiff(self.old_content.splitlines(), self.new_content.splitlines())
-        changes = [line for line in diff if line.startswith('+ ') or line.startswith('- ')]
+        changes = [line[2:] for line in diff if (line.startswith('+ ') or line.startswith('- ')) and line[2:].strip()]
         return '\n'.join(changes) if changes else "No changes detected."
 
     def load_previous_content(self, filename):
