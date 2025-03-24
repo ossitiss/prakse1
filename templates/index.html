@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Change Detector</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to the external CSS file -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f9f9f9;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 950px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%; /* Adjust width to 100% for better layout */
+            border: 2px solid #000; /* Clear border lines */
+        }
+
+        table th, table td {
+            border: 1px solid #000; /* Borders between cells */
+            padding: 8px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        table td {
+            background-color: #fff;
+        }
+
+        .button-panel {
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            align-items: flex-start; /* Aligns buttons to the left inside the panel */
+            margin-left: auto; /* Keeps the button panel to the right side of the table */
+        }
+
+        .button-panel button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 150px; /* Ensures consistent width */
+        }
+
+        /* Add 10px space below all buttons except the 4th */
+        .button-panel button:not(:last-child) {
+            margin-bottom: 10px;
+        }
+
+        .button-panel button:hover {
+            background-color: #0056b3;
+        }
+
+        .save-button {
+            margin-top: 20px; /* Adds some space above the Save button */
+        }
+
+        .editable select, .editable input[type="number"] {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Web page content change detector</h1>
+        <!-- Table Section -->
+        <table id="contentChangeDetector">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>URL</th>
+                    <th>Method</th>
+                    <th>Value</th>
+                    <th>Regularity</th>
+                    <th>Notification</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="radio" name="selectRow" value="0"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><input type="radio" name="selectRow" value="1"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><input type="radio" name="selectRow" value="2"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Save Button Section -->
+        <div id="saveButtonContainer" class="save-button"></div>
+
+        <!-- Buttons Section -->
+        <div class="button-panel">
+            <button onclick="makeNextRowEditable()">New</button>
+            <button onclick="editRow()">Edit</button>
+            <button onclick="deleteRow()">Delete</button>
+            <button onclick="runRow()">Run</button>
+        </div>
+    </div>
+
+    <script>
+        let editableRow = null;
+        let currentRowCount = 0;
+
+        function makeNextRowEditable() {
+            const rows = document.querySelectorAll('#contentChangeDetector tbody tr');
+            let nextRow = null;
+
+            for (let i = 0; i < rows.length; i++) {
+                if (!rows[i].dataset.saved) {
+                    nextRow = rows[i];
+                    break;
+                }
+            }
+
+            if (!nextRow) {
+                // Add a new row if all existing rows have data
+                const tbody = document.querySelector('#contentChangeDetector tbody');
+                const newRow = tbody.insertRow();
+                newRow.innerHTML = `
+                    <td><input type="radio" name="selectRow" value="${rows.length}"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                `;
+                nextRow = newRow;
+            }
+
+            nextRow.classList.add('editable');
+            const cells = nextRow.getElementsByTagName('td');
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].contentEditable = 'true';
+            }
+
+            // Set the number in the first column
+            currentRowCount++;
+            cells[1].innerText = currentRowCount + '.';
+
+            // Add a dropdown menu for the 'Method' column (4th column)
+            const selectMethod = document.createElement('select');
+            selectMethod.innerHTML = `
+                <option value="full">full</option>
+                <option value="field">field</option>
+                <option value="keyword">keyword</option>
+            `;
+            selectMethod.onchange = function() {
+                updateValueColumn(selectMethod, cells[5]);
+            };
+            cells[4].innerHTML = '';
+            cells[4].appendChild(selectMethod);
+
+            // Initialize the 'Value' column based on the 'Method' selection
+            updateValueColumn(selectMethod, cells[5]);
+
+            // Add a dropdown menu for the 'Regularity' column (6th column)
+            const selectRegularity = document.createElement('select');
+            for (let i = 1; i <= 24; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = i;
+                selectRegularity.appendChild(option);
+            }
+            cells[6].innerHTML = '';
+            cells[6].appendChild(selectRegularity);
+
+            // Set the status to 'not active' by default
+            cells[8].innerText = 'not active';
+            cells[8].contentEditable = 'false';
+
+            // Create the "Save" button and add it under the table
+            const saveButton = document.createElement('button');
+            saveButton.innerText = 'Save';
+            saveButton.classList.add('button');
+            saveButton.onclick = () => saveRowData(nextRow);
+            document.getElementById('saveButtonContainer').appendChild(saveButton);
+        }
+
+        function updateValueColumn(methodSelect, valueCell) {
+            valueCell.innerHTML = ""; // Clear any existing content in the cell
+            
+            if (methodSelect.value === "full") {
+                valueCell.innerText = "full content";
+                valueCell.contentEditable = "false";
+            } else if (methodSelect.value === "field") {
+                // Create a select dropdown for "<" and ">"
+                const comparisonSelect = document.createElement("select");
+                comparisonSelect.innerHTML = `
+                    <option value="<"><</option>
+                    <option value=">">></option>
+                `;
+                
+                // Create an input for the target price
+                const numberInput = document.createElement("input");
+                numberInput.type = "number";
+                numberInput.step = "any"; // Allows decimals
+                numberInput.placeholder = "Enter price"; // Prompt for clarity
+                numberInput.style.marginLeft = "10px";
+                
+                // Append the dropdown and input to the cell
+                valueCell.appendChild(comparisonSelect);
+                valueCell.appendChild(numberInput);
+                valueCell.contentEditable = "false"; // Ensure the cell itself isn't editable
+            } else if (methodSelect.value === "keyword") {
+                // Create an input field for entering keywords
+                const keywordInput = document.createElement("input");
+                keywordInput.type = "text";
+                keywordInput.placeholder = "Enter keyword...";
+                keywordInput.style.width = "100%";
+                
+                // Append the input field to the cell
+                valueCell.appendChild(keywordInput);
+                valueCell.contentEditable = "false"; // Ensure the cell itself isn't editable
+            }
+        }
+
+        function saveRowData(row) {
+            const cells = row.getElementsByTagName('td');
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].contentEditable = 'false';
+            }
+
+            // Mark the row as saved
+            row.dataset.saved = true;
+
+            // Remove the "Save" button
+            const saveButtonContainer = document.getElementById('saveButtonContainer');
+            saveButtonContainer.innerHTML = '';
+
+            // Set the row as non-editable
+            row.classList.remove('editable');
+        }
+
+        function editRow() {
+            // Get the selected row index
+            const selectedRowIndex = document.querySelector('input[name="selectRow"]:checked').value;
+            const rowToEdit = document.querySelectorAll('#contentChangeDetector tbody tr')[selectedRowIndex];
+            const cells = rowToEdit.getElementsByTagName('td');
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].contentEditable = 'true';
+            }
+
+            // Add a dropdown menu for the 'Method' column
+            const select = document.createElement('select');
+            select.innerHTML = `
+                <option value="full">full</option>
+                <option value="field">field</option>
+                <option value="keyword">keyword</option>
+            `;
+            select.onchange = function() {
+                updateValueColumn(select, cells[5]);
+            };
+            cells[4].innerHTML = '';
+            cells[4].appendChild(select);
+
+            // Initialize the 'Value' column based on the 'Method' selection
+            updateValueColumn(select, cells[5]);
+
+            // Add a dropdown menu for the 'Regularity' column (6th column)
+            const selectRegularity = document.createElement('select');
+            for (let i = 1; i <= 24; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = i;
+                selectRegularity.appendChild(option);
+            }
+            cells[6].innerHTML = '';
+            cells[6].appendChild(selectRegularity);
+
+            // Set the 'Status' column to 'not active' by default and make it non-editable
+            cells[8].innerText = 'not active';
+            cells[8].contentEditable = 'false';
+
+            // Create the "Save" button and add it under the table
+            const saveButton = document.createElement('button');
+            saveButton.innerText = 'Save';
+            saveButton.classList.add('button');
+            saveButton.onclick = () => saveRowData(rowToEdit);
+            document.getElementById('saveButtonContainer').appendChild(saveButton);
+
+            // Set the editableRow to the current row
+            editableRow = rowToEdit;
+        }
+
+        function deleteRow() {
+            // Get the selected row index
+            const selectedRowIndex = parseInt(document.querySelector('input[name="selectRow"]:checked').value);
+            const table = document.querySelector('#contentChangeDetector tbody');
+            const rows = table.querySelectorAll('tr');
+
+            // Delete the selected row
+            table.deleteRow(selectedRowIndex);
+
+            // Adjust the radio button values for remaining rows
+            for (let i = selectedRowIndex; i < rows.length - 1; i++) {
+                const currentRow = table.rows[i];
+                currentRow.getElementsByTagName('input')[0].value = i; // Update the radio button value
+            }
+        }
+
+        function runRow() {
+            const selectedRowIndex = document.querySelector('input[name="selectRow"]:checked').value;
+            const rowToRun = document.querySelectorAll('#contentChangeDetector tbody tr')[selectedRowIndex];
+            const cells = rowToRun.getElementsByTagName('td');
+
+            const url = cells[3].innerText;
+            const regularity = cells[6].querySelector('select').value; // Assuming regularity is stored in a dropdown
+            const notification = cells[7].innerText;
+            const method = cells[4].querySelector('select').value; // Method column
+            const value = method === "keyword" 
+                ? cells[5].querySelector('input').value // Get keyword from Value column
+                : null;
+
+            // Send data to the backend
+            fetch('/run_row', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url, regularity, notification, method, value }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("The program is running for the selected row!");
+                    cells[8].innerText = "active"; // Update the status column
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
