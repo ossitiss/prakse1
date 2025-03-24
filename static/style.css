@@ -1,0 +1,67 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f9f9f9;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 1200px;
+}
+
+table {
+    border-collapse: collapse; /* Ensures no double borders */
+    width: 75%;
+    border: 2px solid #000; /* Adds a solid border around the entire table */
+}
+
+table th, table td {
+    border: 1px solid #000; /* Adds solid borders between all cells */
+    padding: 8px;
+    text-align: center;
+}
+
+table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+table td {
+    background-color: #fff;
+}
+
+.button-panel {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: flex-start; /* Aligns buttons to the left inside the panel */
+    margin-left: auto; /* Keeps the button panel to the right side of the table */
+}
+
+.button-panel button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 150px; /* Ensures consistent width */
+    margin-bottom: 10px;
+}
+
+.button-panel button:hover {
+    background-color: #0056b3;
+}
