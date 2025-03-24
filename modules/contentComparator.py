@@ -3,7 +3,7 @@ import os
 
 class contentComparator:
     def __init__(self, new_content):
-        self.old_content = ""  # Initially empty
+        self.old_content = ""
         self.new_content = new_content
 
     def detect_changes(self):
