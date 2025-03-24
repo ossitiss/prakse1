@@ -1,6 +1,6 @@
 import requests
 
-class WebFetcher:
+class webFetcher:
     def __init__(self, url):
         self.url = url
         self.html_content = ""
