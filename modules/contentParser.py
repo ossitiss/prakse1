@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 
-class ContentParser:
+class contentParser:
     def __init__(self, html_content):
         self.html_content = html_content
 
