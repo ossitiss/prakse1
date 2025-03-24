@@ -1,92 +1,74 @@
 import smtplib
+import time
+from bs4 import BeautifulSoup
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from WebFetcher import WebFetcher
-from ContentComparator import ContentComparator
+from modules.webFetcher import webFetcher
+from modules.contentComparator import contentComparator
+from modules.contentParser import contentParser
+
+def check_for_changes(url, notification_email):
+    # Fetch content
+    fetcher = webFetcher(url)
+    new_html_content = fetcher.fetch_content()
+
+    # Compare content
+    comparator = contentComparator(new_html_content)
+    comparator.load_previous_content("previous_content.txt")
+    changes = comparator.detect_changes()
+
+    if changes:
+        print("Changes detected!")
+        
+        # Send email notification
+        subject = "Content change detected"
+        body = f"Content change was detected on the webpage:\n{url}"
+        send_email(subject, body, notification_email)
+
+        # Save the current content
+        comparator.save_current_content("previous_content.txt")
+
+def check_for_keyword(url, notification_email, keyword):
+    # Fetch content
+    fetcher = webFetcher(url)
+    html_content = fetcher.fetch_content()
+
+    # Parse content to find the keyword
+    soup = BeautifulSoup(html_content, "html.parser")
+    if keyword.lower() in soup.get_text().lower():  # Case-insensitive search
+        print(f"Keyword '{keyword}' detected on the webpage!")
+        
+        # Send email notification
+        subject = "Keyword detected"
+        body = f"The keyword '{keyword}' was detected on the webpage:\n{url}"
+        send_email(subject, body, notification_email)
+    else:
+        print(f"Keyword '{keyword}' not found on the webpage.")
 
 def send_email(subject, body, to_email):
     from_email = "prakse2025@inbox.lv"
     password = "JE8Xr3Ke8w"
 
-    # Create message container
     msg = MIMEMultipart()
     msg['From'] = from_email
     msg['To'] = to_email
     msg['Subject'] = subject
-
-    # Attach message body
     msg.attach(MIMEText(body, 'plain'))
 
-    # Connect to the server and send the email
     try:
-        server = smtplib.SMTP('mail.inbox.lv', 587)  # SMTP server and port
-        server.set_debuglevel(1)  # Enable debugging to print the SMTP communication
-
-        server.starttls()  # Upgrade to a secure connection
-        server.login(from_email, password)  # Log in to the email server
-        server.sendmail(from_email, to_email, msg.as_string())  # Send the email
-        server.quit()  # Disconnect from the server
+        server = smtplib.SMTP('mail.inbox.lv', 587)
+        server.starttls()
+        server.login(from_email, password)
+        server.sendmail(from_email, to_email, msg.as_string())
+        server.quit()
         print("Email sent successfully!")
-    except smtplib.SMTPAuthenticationError:
-        print("Authentication failed: Check your email or password.")
-    except smtplib.SMTPConnectError:
-        print("Connection error: Check your SMTP server and port.")
     except Exception as e:
         print("Failed to send email:", str(e))
 
 if __name__ == "__main__":
     url = "https://www.neste.lv/lv/content/degvielas-cenas"
+    notification_email = "oskars_val@inbox.lv"
     
-    # Fetch content
-    fetcher = WebFetcher(url)
-    new_html_content = fetcher.fetch_content()
-    
-    # Compare content
-    comparator = ContentComparator(new_html_content)  # Initialize with new content
-    comparator.load_previous_content("previous_content.txt")  # Load previous content from file
-    changes = comparator.detect_changes()
-    
-    if changes:
-        print("Changes detected:\n", changes)
-        # Send email notification
-        subject = "Content Change Detected"
-        body = f"Changes detected in the content:\n{changes}"
-        to_email = "oskars_val@inbox.lv"
-        send_email(subject, body, to_email)
-    
-    # Save the current content only if changes are detected
-    if changes:
-        comparator.save_current_content("previous_content.txt")
-
-'''
-from WebFetcher import WebFetcher
-from ContentParser import ContentParser
-from ElementComparator import ElementComparator  # Import the updated ElementComparator class
-
-if __name__ == "__main__":
-    url = "https://www.neste.lv/lv/content/degvielas-cenas"
-    
-    # Fetch content
-    fetcher = WebFetcher(url)
-    new_html_content = fetcher.fetch_content()
-    
-    # Parse content (if needed for other purposes)
-    parser = ContentParser(new_html_content)
-    prices = parser.parse_prices()
-    print(f"Prices: {prices}")
-    
-    # Compare content of a specific element
-    selector = "strong"  # Update this selector to target the specific part of the page
-    comparator = ElementComparator(selector)
-    comparator.load_previous_content("previous_element_content.txt")
-    comparator.update_content(new_html_content)
-    changes = comparator.detect_changes()
-    
-    if changes:
-        print("Changes detected in the specific element:\n", changes)
-    else:
-        print("No changes detected in the specific element.")
-    
-    # Save the full HTML content for future comparisons
-    comparator.save_current_content("previous_element_content.txt", new_html_content)
-'''
+    while True:
+        check_for_changes(url, notification_email)
+        time.sleep(3 * 60 * 60)  # Sleep for 3 hours before checking again
