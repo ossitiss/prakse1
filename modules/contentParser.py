@@ -6,6 +6,6 @@ class contentParser:
 
     def parse_prices(self):
         soup = BeautifulSoup(self.html_content, "html.parser")
-        price_elements = soup.find_all("strong")  # Adjust the selector as needed
-        prices = [element.text for element in price_elements]
-        return prices if prices else ["Prices not found"]
+#        price_elements = soup.find_all("strong")
+#        prices = [element.text for element in price_elements]
+#        return prices if prices else ["Prices not found"]
